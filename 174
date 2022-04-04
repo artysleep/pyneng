@@ -1,0 +1,104 @@
+# -*- coding: utf-8 -*-
+"""
+Задание 17.4
+
+Создать функцию write_last_log_to_csv.
+
+Аргументы функции:
+* source_log - имя файла в формате csv, из которого читаются данные (mail_log.csv)
+* output - имя файла в формате csv, в который будет записан результат
+
+Функция ничего не возвращает.
+
+Функция write_last_log_to_csv обрабатывает csv файл mail_log.csv.
+В файле mail_log.csv находятся логи изменения имени пользователя. При этом, email
+пользователь менять не может, только имя.
+
+Функция write_last_log_to_csv должна отбирать из файла mail_log.csv только
+самые свежие записи для каждого пользователя и записывать их в другой csv файл.
+В файле output первой строкой должны быть заголовки столбцов,
+такие же как в файле source_log.
+
+Для части пользователей запись только одна и тогда в итоговый файл надо записать
+только ее.
+Для некоторых пользователей есть несколько записей с разными именами.
+Например пользователь с email c3po@gmail.com несколько раз менял имя:
+C=3PO,c3po@gmail.com,16/12/2019 17:10
+C3PO,c3po@gmail.com,16/12/2019 17:15
+C-3PO,c3po@gmail.com,16/12/2019 17:24
+
+Из этих трех записей, в итоговый файл должна быть записана только одна - самая свежая:
+C-3PO,c3po@gmail.com,16/12/2019 17:24
+
+Для сравнения дат удобно использовать объекты datetime из модуля datetime.
+Чтобы упростить работу с датами, создана функция convert_str_to_datetime - она
+конвертирует строку с датой в формате 11/10/2019 14:05 в объект datetime.
+Полученные объекты datetime можно сравнивать между собой.
+Вторая функция convert_datetime_to_str делает обратную операцию - превращает
+объект datetime в строку.
+
+Функции convert_str_to_datetime и convert_datetime_to_str использовать не обязательно.
+
+"""
+
+import datetime
+from enum import unique
+import os
+from pprint import pprint
+import csv
+
+path = "C:/Git/online-12-artem-chernyshiov/exercises/17_serialization/"
+os.chdir(path)
+
+def convert_str_to_datetime(datetime_str):
+    """
+    Конвертирует строку с датой в формате 11/10/2019 14:05 в объект datetime.
+    """
+    return datetime.datetime.strptime(datetime_str, "%d/%m/%Y %H:%M")
+
+
+def convert_datetime_to_str(datetime_obj):
+    """
+    Конвертирует строку с датой в формате 11/10/2019 14:05 в объект datetime.
+    """
+    return datetime.datetime.strftime(datetime_obj, "%d/%m/%Y %H:%M")
+
+def custom_key(lst): 
+    return lst[1]
+
+
+def write_last_log_to_csv(source_log,output=None):
+    logs_list = []
+    unique_logs_list = []
+    mail_list = []
+    with open(source_log, "r") as csvfile:
+        reader = csv.reader(csvfile)
+        for line in reader:
+            logs_list.append(line)
+
+    unique_logs_list.append(logs_list[0])
+    for line in logs_list[1::]:
+        mail_list.append(line[1])
+    mail_list = set(mail_list)
+    #print(mail_list)
+    for mail in mail_list:
+        date = "11/10/1900 14:05"
+        mail_old = ""
+        for log in logs_list:
+            if mail in log:
+                date_new = log[2]
+                if convert_str_to_datetime(date_new) > convert_str_to_datetime(date):
+                    date = log[2]
+                    print(mail,log[2],date)
+                else:
+                    break
+            if mail in log and date in log:
+                unique_logs_list.append(log)
+    with open(output, "w", newline="") as csvfile:
+        wr = csv.writer(csvfile)
+        for line in unique_logs_list:
+                wr.writerow(line)
+    return(unique_logs_list)
+
+if __name__ == "__main__":
+    pprint(write_last_log_to_csv("mail_log.csv","output2.csv"))
